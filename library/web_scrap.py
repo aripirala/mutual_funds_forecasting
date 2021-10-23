@@ -10,6 +10,7 @@ output_dir = '../input/'
 page_appenders = list(string.ascii_uppercase)
 print(page_appenders)
 
+fund_list = []
 for letter in page_appenders:
     page = url+letter
     request_page = urlopen(page)
@@ -18,12 +19,11 @@ for letter in page_appenders:
 
     html_soup = BeautifulSoup(page_html, 'html.parser')
     mutual_funds_items = html_soup.find_all('td', class_='quotelist-symb')
-    counter = 0
 
-    fund_list = []
+    
     for i, fund in enumerate(mutual_funds_items):        
         fund_list.append(fund.text)
-    
+    # print(fund_list)
 funds_df = pd.DataFrame(fund_list)
-funds_df.columns = 'Fund_Symbol'
-funds_df.write_csv(os.path.join(output_dir, 'mutual_funds.csv'), headers=True)
+funds_df.columns = ['Fund_Symbol']
+funds_df.to_csv(os.path.join(output_dir, 'mutual_funds.csv'), header=True)

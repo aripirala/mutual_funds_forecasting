@@ -11,11 +11,17 @@ fund_df = pd.read_csv(file_path)
 print(fund_df)
 tickers = list(fund_df.Fund_Symbol.values)
 tickers = [str(elem) for elem in tickers]
-print(tickers)
-tickers_str = " ".join(tickers)
-# print(tickers_str[:10])
-# tickers_str = "SPY AAPL MSFT"
-data = yf.download(  # or pdr.get_data_yahoo(...
+ticker_len = 1000
+for i in range(0, len(tickers), ticker_len):
+    tickers_1000 = tickers[i:(i+ticker_len)]
+
+    print(tickers)
+    tickers_str = " ".join(tickers_1000)
+    file_appendix = f'_{i}-{i+ticker_len}'
+    # print(tickers_str[:10])
+    # tickers_str = "SPY AAPL MSFT"
+  
+    data = yf.download(  # or pdr.get_data_yahoo(...
         # tickers list or string as well
         tickers = tickers_str,
         # start="2020-10-22", end="2021-10-22",
@@ -49,12 +55,6 @@ data = yf.download(  # or pdr.get_data_yahoo(...
         # (optional, default is None)
         proxy = None
     )
-print(data['Close'].head())
 
-
-data['Close'].to_csv(os.path.join(FILE_DIR, 'mutual_funds_history.csv'), header=True)
-
-# fund = yf.Ticker("VFIAX")
-# pprint(fund.info)
-# pprint(fund.history(period="max"))
+    data['Close'].to_csv(os.path.join(FILE_DIR, f'mutual_funds_history-{file_appendix}.csv'), header=True)
 

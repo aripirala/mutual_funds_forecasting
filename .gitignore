@@ -83,6 +83,7 @@ ipython_config.py
 
 # flat files
 *.csv
+*.xlsx
 
 # pyenv
 .python-version

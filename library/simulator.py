@@ -1,6 +1,9 @@
 import pprint as pp
 import pandas as pd
+import numpy as np
 from collections import deque
+from datetime import datetime, timedelta
+    
 
 class Block:
     def __init__(self, units, purchase_price, period):
@@ -30,14 +33,18 @@ class Fund:
         self.total_units += units
         self.latest_purchase_period = purchase_period
         self.latest_purchase_units = units
+        self.update_fund() #update current value
         return self.current_price*units
         
-    def sell(self, units):
+    def sell(self, units=None, sell_value=None):
+        if sell_value:
+            units = sell_value/self.current_price
         if self.total_units < units:
             print("We dont have enought units. Can't perform the action")
             return 0
+        if sell_value is None:
+            sell_value = self.current_price*units
         
-        sell_value = self.current_price*units
         while(units>0):
             sell_block = self.blocks.pop()
             if sell_block.units > units:                
@@ -50,8 +57,9 @@ class Fund:
             self.total_units -= sell_block.units
         return sell_value
 
-    def update_fund(self, price):
-        self.current_price = price
+    def update_fund(self, price=None):
+        if price:
+            self.current_price = price
         self.current_value = self.total_units*self.current_price
     
     def get_current_value(self):
@@ -59,17 +67,34 @@ class Fund:
         
 
 class Simulator:
-    def __init__(self, fund_history, seed_fund=5000, periods=52) -> None:
+    def __init__(self, fund_history, seed_fund=5000, periods=52, start_period='2020-10-19', max_per_fund=1000) -> None:
         self.fund_history = fund_history
+        # print(periods)
+        # print("Printing fund history")
+        # print(type(fund_history))
+        # print(fund_history)
+        # print(self.fund_history.head())
         self.portfolio = {}
         self.balance = seed_fund
-        self.max_per_fund = 1000
+        self.max_per_fund = max_per_fund
+        self.start_period = start_period
         self.periods = periods
-        self.curr_period = 1
-            
+        self.periods_dt = self.generate_periods()
+        self.curr_period = 1        
+        self.current_fund_price_df = pd.DataFrame()
+    
+    def generate_periods(self):
+        print("Generating periods")
+        start_dt = datetime.strptime(self.start_period, '%Y-%m-%d')
+        periods_list = [start_dt + timedelta(days=7*per) for per in range(self.periods)]
+        return periods_list
+
     def get_recommendations(self, model, period):
-        print("Model generating recommendations")
-        return True
+        print("Model generating recommendations")        
+        unit_rise_df = pd.DataFrame(self.fund_history.loc[:self.periods_dt[period]]
+                                    .apply(model, axis=0), # apply mean to each column 
+                                    columns=['unit_rise']).sort_values('unit_rise', ascending=False)
+        return unit_rise_df
     
     def analyze_recommendations(self, recommendations):
         print("comparing the performance of recommendations with current portfolio")
@@ -95,7 +120,6 @@ class Simulator:
         purchase_value = symb_fund.buy(units, self.curr_period)
         self.balance -= purchase_value
         
-
     def sell_fund(self, symb, units):
         if symb not in self.portfolio.keys():
             print(f"Selling couldnt be completed as you dont have {symb} in your portfolio")
@@ -108,36 +132,37 @@ class Simulator:
         else:
             self.balance += sell_value
 
-    def get_price(self, symb, period=None):
-        if period is None:
-            period = self.curr_period
-        pass
+    def update_current_price(self):
+        self.current_fund_price_df = pd.DataFrame(self.fund_history.loc[self.periods_dt[self.curr_period]])
 
+    def get_price(self, symb):        
+        return self.current_fund_price_df.loc[symb].values[0]
+        
     def update_portfolio(self):
         for symb, fund in self.portfolio.items():
             price = self.get_price(symb)
             fund.update_fund(price)
 
-
     def simulate(self, models):
         for i, model in enumerate(models):
             print("Running the simulation for model - {i+1}")
-            for period in range(1,self.periods,1): 
-                self.curr_period = period           
+            for period in range(4,52,1): 
+                self.curr_period = period
+                self.update_current_price()           
                 self.print_desirables(period)
-                self.update_portfolio(period)
+                self.update_portfolio()
                 recommendations = self.get_recommendations(model, period)
+                print(recommendations.head())
                 self.analyze_recommendations(recommendations)
-                
-    
+                    
 
 if __name__ == "__main__":
-    
+    # from models
     
     models = []
     
     params = {
-        'periods': 5,
+        'periods': 52,
         'fund_history': pd.DataFrame(),
     }
     sim = Simulator(*params)

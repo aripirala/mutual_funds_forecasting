@@ -9,7 +9,24 @@ Created on Mon Nov  1 16:30:18 2021
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-import mutual_fund as mf
+# import mutual_fund as mf
+
+def calc_unit_change_mod(col):
+    """
+    """    
+    n_weeks = len(col.values)
+    sum_col = np.sum(col.values)
+    if np.isnan(sum_col):
+        # there is a nan in the window
+        return -100
+    
+    x = np.array(range(n_weeks)).reshape((-1, 1))
+    y = col.values
+
+    model = LinearRegression()
+    model.fit(x, y)
+    unit_rise = model.coef_[0] * 100 / model.intercept_
+    return unit_rise
 
 
 def calc_unit_change(in_df: pd.DataFrame, strt_col: int, n_weeks: int) -> pd.DataFrame:

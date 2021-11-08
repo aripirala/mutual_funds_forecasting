@@ -97,6 +97,17 @@ class Simulator:
         return unit_rise_df
     
     def analyze_recommendations(self, recommendations):
+        """[summary]
+        TODO: 
+        1. Get current portfolio value
+        2. Sell some units if any fund is greater than max_per_fund threshold -  1/10 and passed minimum holding period (2months)
+        3. Identify 3 stocks to buy and 3 stocks to sell 
+        4. Each buy can be at most for 1/20th current wealth
+        5. Each sell can be at most 1/20th current wealth (account for selling fee 1%)
+
+        Args:
+            recommendations ([type]): [description]
+        """
         print("comparing the performance of recommendations with current portfolio")
 
     def print_desirables(self, period=None):
@@ -152,10 +163,10 @@ class Simulator:
                 self.print_desirables(period)
                 self.update_portfolio()
                 recommendations = self.get_recommendations(model, period)
-                print(recommendations.head())
+                # print(recommendations.head())
                 self.analyze_recommendations(recommendations)
                     
-
+                    
 if __name__ == "__main__":
     # from models
     
